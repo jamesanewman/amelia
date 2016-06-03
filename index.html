@@ -1,0 +1,36 @@
+<html>
+<head>
+
+<script type="text/javascript" src='bower_components/ramda/dist/ramda.js'></script>
+<script type="text/javascript" src='bower_components/EaselJS/lib/easeljs-0.8.2.combined.js'></script>
+<script type='text/javascript' src='scripts/app.js'></script>
+</head>
+
+<body onload='init()'>
+
+<canvas id='demoCanvas' width='500' height='300'></canvas>
+
+<script>
+
+function init(){
+
+	console.log('Init called');
+	// var stage = new createjs.Stage('demoCanvas');
+	// var circle = new createjs.Shape();
+	// circle.graphics
+	// 	.beginFill('DeepSkyBlue')
+	// 	.drawCircle( 0,0,50 );
+
+	// circle.x = 100;
+	// circle.y = 100;
+
+	// stage.addChild( circle );
+	// stage.update();
+	console.log('Init complete');
+
+	App.init('demoCanvas');
+}
+</script>
+
+</body>
+</html>
