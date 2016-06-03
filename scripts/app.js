@@ -5,13 +5,14 @@ var App = ( function( window,fps ){
 		state = new State(),
 		Grid,
 		stage, 
-		elements = [];
+		elements = [],
+		stage;
 
 
 
 	App.init = function(canvasId){
 		console.log('Application init: ' , state.fps );
-		var stage = new createjs.Stage(canvasId);
+		stage = new createjs.Stage(canvasId);
 
 		Grid = buildGridAPI( state,stage.canvas );
 
@@ -27,7 +28,14 @@ var App = ( function( window,fps ){
 
 		addCounters( stage, [] );
 		createjs.Ticker.setFPS( state.fps );
-		createjs.Ticker.addEventListener( 'tick', stage );
+		createjs.Ticker.addEventListener( 'tick', this.update.bind( this ) );
+	}
+
+	App.update = function(event){
+		//console.log("Paused:", event.paused, event.delta);
+		//console.log( 'Update stage' );
+		stage.update( ['m,mmm'])
+
 	}
 
 	return App;
@@ -69,10 +77,30 @@ var App = ( function( window,fps ){
 			g.beginStroke(createjs.Graphics.getRGB(0,255,0)).beginFill("#ff0000").drawCircle(x, y, 10);
 
 			var c = new createjs.Shape( g );
+
+			var msg = new createjs.Text( Counter.title,'20px Arial', '#ff7700');
+			msg.x = Grid.columnPos( Counter.c );
+			msg.y = Grid.rowPos( Counter.r );
+
+			// c.addEventListener( 'tick', function(){
+			// 	console.log('Counter tick ' , arguments );
+			// });
+			// c.addEventListener( 'click', function(){
+			// 	console.log( 'Counter Click ', arguments);
+			// })
+			c.addEventListener( 'pressup', function(e){
+				console.log('Pressup ', arguments);
+				c.x = e.stageX;
+				c.y = e.stageY;
+
+				console.log( 'Column: [' , Grid.pos2col(c.x),',',Grid.pos2row(c.y) , '] <- [', e.stageX, ',',e.stageY,']');
+			})
 			stage.addChild( c );
+			stage.addChild( msg );
 		} 
 
 		drawCounter(stage, {
+			title: 'Counter type A',
 			pos: [1,1]
 		});
 	}
@@ -88,7 +116,7 @@ var App = ( function( window,fps ){
 
 		Counter.c = R.nth( 0, R.prop( 'pos' , counter ) );
 		Counter.r = R.nth( 1, R.prop( 'pos', counter ) );
-
+		Counter.title = R.prop( 'title', counter );
 
 
 		return Counter;
@@ -120,6 +148,15 @@ var App = ( function( window,fps ){
 		Grid.scaleX = R.divide( canvas.width , Grid.width );
 		Grid.scaleY = R.divide( canvas.height , Grid.height );
 
+		// stage x/y to column
+		// scale back down to units then just get floor( / unit 
+		Grid.pos2col = function( value ) {
+			return Math.floor( (value/Grid.scaleX)/Grid.unitX )	;
+		}		
+		Grid.pos2row = function( value ) {
+			return Math.floor( (value/Grid.scaleY)/Grid.unitY )	;
+		}
+
 console.log('building...', Grid)
 
 		return Grid;
@@ -127,6 +164,7 @@ console.log('building...', Grid)
 	}
 
 	function State(){
+		
 		this.game = {
 			rows : 10,
 			columns: 10,
@@ -136,6 +174,12 @@ console.log('building...', Grid)
 		this.fps = fps;
 		this.test = 1;
 		this.level = new Level();
+		this.counters = [];
+
+	}
+
+	State.prototype.getCounters = function(){
+
 	}
 
 	function Level(){
