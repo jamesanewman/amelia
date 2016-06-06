@@ -1,0 +1,10 @@
+{
+	"title": "Level 1",
+	"id": "resource-manifest",
+	"type": "manifest",
+	"manifest":[
+		{"src": "levels/level1/images/dancer.jpg", "id":"dancer"},
+		{"src": "levels/level1/images/zombie.png", "id":"zombie", "data": { "type":"zombie", "delay": 1000 }},
+		{"src": "levels/level1/images/background.jpg", "id":"background"}
+	]
+}

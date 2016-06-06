@@ -1,34 +1,65 @@
 <html>
 <head>
 
+<script src="bower_components/babel/browser-polyfill.js"></script>
+<script src="bower_components/babel/browser.js"></script>
+<script src="bower_components/es6-module-loader/dist/es6-module-loader-dev.js"></script>
+<script src="bower_components/PreloadJS/lib/preloadjs-0.6.2.combined.js"></script>
 <script type="text/javascript" src='bower_components/ramda/dist/ramda.js'></script>
 <script type="text/javascript" src='bower_components/EaselJS/lib/easeljs-0.8.2.combined.js'></script>
-<script type='text/javascript' src='scripts/app.js'></script>
 </head>
 
-<body onload='init()'>
+<body onload='start()'>
 
-<canvas id='demoCanvas' width='800' height='600' style='border: 1px solid black'></canvas>
+<canvas id='gameCanvas' width='1200' height='800' style='border: 1px solid black'></canvas>
 
 <script>
+System.transpiler = 'babel';
+
+function importModule( fileToImport ){
+	console.log('Importing ' , fileToImport );
+	return System.import( fileToImport ).then( function(module){
+		R.forEach( function addModuleToWindows(moduleName){
+				if( !window[ moduleName ] ){
+					console.log('Adding module ', moduleName, ' (' , fileToImport , ')');
+					window[ moduleName ] = module[moduleName];
+				} else {
+					console.log(moduleName , ' module already installed (' , fileToImport , ')' );
+				}
+			}, R.keys( module ) );
+	});
+}
 
 function init(){
+	var modules = [
+			'scripts/app.js',
+			'scripts/level.js',
+			'scripts/counters.js',
+			'scripts/factories.js'
+		];
+	var importPromises = R.map( importModule , modules );
+	return Promise.all( importPromises );
+}
 
-	console.log('Init called');
-	// var stage = new createjs.Stage('demoCanvas');
-	// var circle = new createjs.Shape();
-	// circle.graphics
-	// 	.beginFill('DeepSkyBlue')
-	// 	.drawCircle( 0,0,50 );
+function startApp(){
 
-	// circle.x = 100;
-	// circle.y = 100;
 
-	// stage.addChild( circle );
-	// stage.update();
-	console.log('Init complete');
+	console.log('=========================');
+	var renderer = new PVZRenderer('gameCanvas');
+	var app = new App( renderer );
+	app.init();
+	// var x = app.loadLevel( 'levels/level1/manifest.json' );
 
-	App.init('demoCanvas');
+	// console.log("Console ", x);
+	// x.then( function(){
+	// 	console.log("Oooo")
+	// } )
+
+	app.loadLevel( 'levels/level1/manifest.json' ).then( app.start.bind( app ) )
+}
+
+function start(){
+	init().then( function(){ console.log('Stage 1') }).then( startApp );
 }
 </script>
 
