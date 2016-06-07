@@ -1,6 +1,6 @@
-export function ZombieFactory( zombieType,opts ){
+export function ZombieFactory( opts ){
 
-	console.log( 'Create a Zombie (", zombieType, ") from options: ' , opts);
+	console.log( 'Create a Zombie (', opts, ') from options: ' , opts.getResult);
 
 	return new BaseZombie( opts );
 }

@@ -7,6 +7,7 @@
 <script src="bower_components/PreloadJS/lib/preloadjs-0.6.2.combined.js"></script>
 <script type="text/javascript" src='bower_components/ramda/dist/ramda.js'></script>
 <script type="text/javascript" src='bower_components/EaselJS/lib/easeljs-0.8.2.combined.js'></script>
+
 </head>
 
 <body onload='start()'>
@@ -35,7 +36,8 @@ function init(){
 			'scripts/app.js',
 			'scripts/level.js',
 			'scripts/counters.js',
-			'scripts/factories.js'
+			'scripts/factories.js',
+			'scripts/utilities.js'
 		];
 	var importPromises = R.map( importModule , modules );
 	return Promise.all( importPromises );

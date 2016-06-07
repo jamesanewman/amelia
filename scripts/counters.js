@@ -1,10 +1,19 @@
+
 export class BaseCounter {
 
+	// 
 }
 
 export class BaseZombie extends BaseCounter {
-	constructor(){
+	constructor( opts ){
 		super();
-		console.log("Base zombie created");
+		console.log("Base zombie created ",opts);
+		this.delay = opts.item.delay;
+		this.opts = opts;
 	}
+
+	getImage(){
+		return this.opts.result;
+	}
+
 }
