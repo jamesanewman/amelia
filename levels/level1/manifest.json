@@ -4,8 +4,8 @@
 	"type": "manifest",
 	"manifest":[
 		{"src": "levels/level1/images/dancer.jpg", "id":"dancer"},
-		{"src": "levels/level1/images/zombie.png", "id":"zombie1", "itemtype":"zombie", "delay": 1000 },
-		{"src": "levels/level1/images/zombie.png", "id":"zombie2", "itemtype":"zombie", "delay": 5000 },
+		{"src": "levels/level1/images/zombie.png", "id":"zombie1", "itemtype":"zombie", "delay": 1000, "speed": 1 },
+		{"src": "levels/level1/images/zombie.png", "id":"zombie2", "itemtype":"zombie", "delay": 5000, "speed": 2 },
 		{"src": "levels/level1/images/background.jpg", "id":"background"}
 	]
 }
