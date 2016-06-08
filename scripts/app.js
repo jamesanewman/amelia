@@ -63,7 +63,7 @@ export class App {
 
 	updateZombie(zombie){
 			// console.log("Update Zombie: " , zombie );
-			zombie.point.x--;
+			zombie.move();
 	}
 	checkZombieQueue(){
 
@@ -85,7 +85,8 @@ export class App {
 
 	initZombie( zombie ){
 		var r =  Math.random() * (5 - 0) + 0;
-		zombie.point = this.draw.getPoint( r, this.draw.columns );
+		//zombie.point = this.draw.getPoint( r, this.draw.columns );
+		zombie.setPoint( this.draw.getPoint( r, this.draw.columns ) );
 		return zombie;		
 	}
 }
