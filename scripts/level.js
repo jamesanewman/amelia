@@ -17,7 +17,7 @@ export class Level {
 				// console.log("xManifest completely loaded " , arguments);
 				// console.log("XManifest Target: " , event.target)
 				// console.log("XManifest Result: " , this.resourceQueue.getResult("dancer2"))
-				console.log("XManifest items: " , this.resourceQueue.getItems())
+				// console.log("XManifest items: " , this.resourceQueue.getItems())
 
 				resolve( this.resourceQueue );
 			},this);
@@ -28,17 +28,14 @@ export class Level {
 	}
 
 	getImage( id ){
-		console.log("Resources " , this.resourceQueue.getItems())
 		return this.resourceQueue.getResult( id );
 	}
 
 	getDataItems(){
-		console.log("Items: " , this.resourceQueue.getItems());
 		return R.map(R.prop('item'),this.resourceQueue.getItems()) ;
 	}
 
 	getZombies(){
-		console.log("Get items = " , this.getDataItems());
 		return R.filter( R.pathEq(['item','itemtype'],'zombie'), this.resourceQueue.getItems());
 	}
 
@@ -49,15 +46,13 @@ export class Level {
 
 	createZombie( zombie ){
 		var z = ZombieFactory( zombie );
-		console.log("Created zombie" ,zombie.result);
 		this.queueZombie( z );
 	}
 
 	queueZombie(zombie){
-		console.log("Zombie should be ready in " , zombie.delay, " secs")
 		var _self = this;
 		setTimeout( function(){
-			console.log("Zombie online...");
+			console.log("Bringing zombie online ... ", zombie);
 			_self.zombieQueue.push( zombie );
 		}, zombie.delay );
 	}

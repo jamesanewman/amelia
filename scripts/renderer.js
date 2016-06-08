@@ -17,7 +17,6 @@ class RenderBase {
 
 	drawBackground(){
 		var bg = new createjs.Bitmap( this.level.getImage('background') );
-		console.log("Background = " , bg );
 		bg.scaleX = this.stage.canvas.width / bg.image.width;
 		this.stage.addChild( bg );
 	}
@@ -56,7 +55,7 @@ export class PVZRenderer extends RenderBase {
 	}
 
 	addZombie( zombie ){
-		console.log("Draw zombie " , zombie );
+		console.log("Add zombie to the stage " , zombie );
 		var _self = this,
 			img = new createjs.Bitmap( zombie.getImage() );
 
@@ -71,27 +70,11 @@ export class PVZRenderer extends RenderBase {
 			var z = event.target;
 			z.x = z.creator.point.x;
 		});
-		console.log("Zombie done... " , img.x, " :: " , img.y);
 	}
 
 	get columns(){ return this._columns - 1;	}
 	set columns(val){ this._columns = val; }
 	get rows(){	return this._rows - 1;	}
 	set rows(val){ this._columns = val; }
-	// start( level ){
-	// 	R.forEach( this.initZombie , level.getZombies() );
-	// }
 
-	// initZombie( zombie ){
-	// 	console.log("Adding zombie ", zombie);
-
-	// 	if( !zombie || !zombie.delay ) return;
-
-	// 	zombie.timer = setTimeout( function(){
-	// 		var z = ZombieFactory( "zombie" , zombie );
-	// 		console.log("Zombie ready to add ... " , zombie, ' -> ', z);
-	// 	} , zombie.delay );
-
-
-	// }
 }

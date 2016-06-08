@@ -20,36 +20,25 @@ export class App {
 	loadLevel( levelURI ){
 		console.log("App load Level ... " ,levelURI);
 		var loaded = this.level.load( levelURI );
-
-		// loaded.then( function(manifest){
-		// 	console.log( levelURI , " Loaded : " , manifest );
-		// })
-		console.log("Loaded level " , loaded);
 		return loaded;
 	}
 
 	init(){
-		console.log('App Init...');
 		return new Promise( function(resolve,reject){
-			resolve("nothing to do yet...");
+			resolve("Application initialised");
 		})
 	}
 
 	start( manifestQueue ){
 		console.log("Starting app... ", manifestQueue, this.draw );
 		this.draw.setLevel( this.level );
-		console.log("Draw Background...");
 		this.draw.drawBackground();
-		//this.draw.start( this.level );
-		console.log("Initialise drawing system with actual data");
-
-		console.log("Set up timer system");
 
 		createjs.Ticker.setFPS( 30 );
 		createjs.Ticker.timingMode = createjs.Ticker.RAF_SYNCHED;
 		createjs.Ticker.addEventListener( 'tick', this.onTick.bind(this) );
-		this.level.startLevel();
 
+		this.level.startLevel();
 	}
 
 	onTick(tickInfo){
@@ -79,7 +68,7 @@ export class App {
 	checkZombieQueue(){
 
 		if( this.level.zombieQueue.length > 0 ){
-			console.log("Don't keep the zombies waiting...");
+			console.log("Adding " , this.level.zombieQueue.length , " zombies to the queue");
 			var zombies = this.level.zombieQueue,
 				_self = this;
 
