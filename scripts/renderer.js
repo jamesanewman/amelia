@@ -21,7 +21,10 @@ class RenderBase {
 		this.stage.addChild( bg );
 	}
 
-
+	remove( item ){
+		var success = this.stage.removeChild( item.renderItem );
+		console.log("Removed " , success , " -> ", item );
+	}
 }
 
 export class PVZRenderer extends RenderBase {
@@ -61,7 +64,7 @@ export class PVZRenderer extends RenderBase {
 
 		img.x = zombie.point.x;
 		img.y = zombie.point.y;
-		zombie.image = img;
+		zombie.renderItem = img;
 		this.stage.addChild( img );
 
 		img.creator = zombie;

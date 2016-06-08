@@ -51,8 +51,16 @@ export class App {
 		this.tickState++;
 
 		this.updateBullets();
+		this.checkAlive();
 		R.forEach( this.updateZombie.bind(this), this.activeZombies );
 		this.checkZombieQueue();
+
+		if( this.tickState % 20 == 0 ){
+			// test damage zombie 
+			R.map( function(z){
+				z.attack( z );
+			}, this.activeZombies );
+		}
 
 		this.draw.update();
 	}
@@ -61,10 +69,24 @@ export class App {
 
 	}
 
+	checkAlive(){
+		var deadZombies = R.filter( function(z){
+			return !z.isAlive();
+		}, this.activeZombies );
+
+		if( deadZombies.length == 0 ) return;
+
+		console.log("Some zombies are dead " , deadZombies);
+		this.activeZombies = R.difference( this.activeZombies, deadZombies );
+		R.forEach( this.draw.remove.bind( this.draw ) , deadZombies );
+		this.draw.update();
+	}
+
 	updateZombie(zombie){
 			// console.log("Update Zombie: " , zombie );
 			zombie.move();
 	}
+
 	checkZombieQueue(){
 
 		if( this.level.zombieQueue.length > 0 ){
@@ -72,17 +94,20 @@ export class App {
 			var zombies = this.level.zombieQueue,
 				_self = this;
 
-			var newZombies = R.forEach( 
-				_self.draw.addZombie.bind( _self.draw ) , 
-				R.map( _self.initZombie.bind(_self) ,zombies )
-			);
-
+			var newZombies = R.forEach( _self.addZombieToStage.bind( _self),_self.initZombies( zombies ));
 			this.activeZombies = R.concat( newZombies,this.activeZombies );
 
 			_self.level.zombieQueue = [];
 		}
 	}
 
+	addZombieToStage( zombie ){
+		this.draw.addZombie( zombie );
+	}
+
+	initZombies( zombies ){
+		return R.map( this.initZombie.bind( this ), zombies );
+	}
 	initZombie( zombie ){
 		var r =  Math.random() * (5 - 0) + 0;
 		//zombie.point = this.draw.getPoint( r, this.draw.columns );
