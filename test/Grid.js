@@ -86,13 +86,58 @@ export class OrangeSlot extends Slot {
 	}
 }
 
+export class BananaSlot extends Slot {
+	constructor( id1,id2,data ){
+		var defData = { type: "banana" },
+			mergedData = R.merge( defData, data );
+
+		super( id1,id2,mergedData );
+	}
+
+	isEmpty(){ return false; }
+	toHTML(){
+		return '<img src="images/banana.jpeg">';
+	}
+}
+
+export class StrawberrySlot extends Slot {
+	constructor( id1,id2,data ){
+		var defData = { type: "strawberry" },
+			mergedData = R.merge( defData, data );
+
+		super( id1,id2,mergedData );
+	}
+
+	isEmpty(){ return false; }
+	toHTML(){
+		return '<img src="images/strawberry.jpeg">';
+	}
+}
+
+
+export class AppleSlot extends Slot {
+	constructor( id1,id2,data ){
+		var defData = { type: "apple" },
+			mergedData = R.merge( defData, data );
+
+		super( id1,id2,mergedData );
+	}
+
+	isEmpty(){ return false; }
+	toHTML(){
+		return '<img src="images/apple.jpeg">';
+	}
+}
+
+
+
 function random(min,max){
 	max--;
 	return Math.round( Math.random() * (max - min) + min );
 }
 
 function SlotFactory( id1,id2,data ){
-	var slotTypes = [ 'Orange',"Cherry" ],
+	var slotTypes = [ 'Orange',"Cherry","Strawberry","Banana","Apple" ],
 		randSlot = random( 0,slotTypes.length ),
 		slotName = slotTypes[ randSlot ] + "Slot";
 	return new window[slotName]( id1, id2, data );
