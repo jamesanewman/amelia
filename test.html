@@ -1,0 +1,213 @@
+<html>
+<head>
+
+<script src="bower_components/babel/browser-polyfill.js"></script>
+<script src="bower_components/babel/browser.js"></script>
+<script src="bower_components/es6-module-loader/dist/es6-module-loader-dev.js"></script>
+<script src="bower_components/PreloadJS/lib/preloadjs-0.6.2.combined.js"></script>
+<script src="bower_components/jquery/dist/jquery.js"></script>
+<script type="text/javascript" src='bower_components/ramda/dist/ramda.js'></script>
+<script type="text/javascript" src='bower_components/EaselJS/lib/easeljs-0.8.2.combined.js'></script>
+
+
+<style type="text/css">
+	.row {
+		display: block;
+		border: 2px solid green;
+		width: 100%;
+	}
+
+	.cell {
+		border: 2px solid blue;
+		border-radius: 5px;
+		margin: 5px;
+		display: inline-block;
+		width: 70px;
+		height: 40px;
+	}
+
+	.cell img {
+		width: 60px;
+		height: 35px;
+	}
+	.drag-hover {
+		background: rgba( 100,0,0,0.5 );
+	}
+</style>
+</head>
+
+<body onload='startApp()'>
+
+<div>
+
+	<div id="grid">
+		
+	</div>
+
+
+</div>
+
+
+<script>
+System.transpiler = 'babel';
+
+function importModule( fileToImport ){
+	console.log('Importing ' , fileToImport );
+	return System.import( fileToImport ).then( function(module){
+		R.forEach( function addModuleToWindows(moduleName){
+				if( !window[ moduleName ] ){
+					console.log('Adding module ', moduleName, ' (' , fileToImport , ')');
+					window[ moduleName ] = module[moduleName];
+				} else {
+					console.log(moduleName , ' module already installed (' , fileToImport , ')' );
+				}
+			}, R.keys( module ) );
+	});
+}
+
+function init(){
+	var modules = [
+			'test/Grid.js'
+		];
+	var importPromises = R.map( importModule , modules );
+	return Promise.all( importPromises );
+}
+
+function startApp(){
+
+
+	console.log('=========================');
+	init().then( run );
+	console.log('=========================');
+
+}
+
+function run(){
+
+	console.log("Running...");
+	var grid = new Grid( 10,10 );
+	console.log("Empty grid = " , grid);
+	console.log("Col 4, Row 5 = ", grid.getItem( 4,5 ));
+	console.log("Row 5 = ", grid.getRow( 5 ));
+	console.log("Col 3 = ", grid.getColumn( 3 ));
+	console.log("Surrounding items  = ", grid.getAdjacentItems( 4,5 ));
+	grid.getMatches();
+	grid.getMatch(5,5);
+
+	console.log("Can swap [2,2][2,3] ", grid.canSwapItems( 2,2,2,3 ));
+	console.log("Can swap [2,3][2,3] ", grid.canSwapItems( 2,3,2,3 ));
+	console.log("Can swap [2,2][2,5] ", grid.canSwapItems( 2,2,2,5 ));
+	console.log("Can swap [2,2][3,2] ", grid.canSwapItems( 2,2,3,2 ));
+	console.log("Can swap [2,2][4,2] ", grid.canSwapItems( 2,2,4,2 ));
+
+	buildGrid( grid );
+}
+
+function buildGrid( grid ){
+	var $grid = $( '#grid' );
+
+	console.log("Building UI");
+	$grid.empty();
+	for( var r=0; r<grid.rows; r++ ){
+	var $row = $('<div class="row"></div>'); 
+		for( var c=0; c<grid.columns; c++ ){
+			var item = grid.getItem( c,r );
+			var $col = $('<div class="cell">' + item.toHTML() + '</div>');
+			$col.attr( "draggable",true );
+			$col.attr( "slot-uid",item.uid );
+
+			$col.on('dragstart',R.partial( handleDragStart, [grid] ));
+			$col.on('drag',R.partial( handleDrag, [grid] ));
+			$col.on('dragenter',R.partial( handleDragEnter, [grid] ));
+			$col.on('dragleave',R.partial( handleDragLeave, [grid] ));
+			$col.on('dragover',R.partial( handleDragOver, [grid] ));
+			$col.on('drop',R.partial( handleDrop, [grid] ));
+			$col.on('dragend',R.partial( handleDragEnd, [grid] ));
+			$col.appendTo( $row );
+
+		}		
+		$row.appendTo( $grid );
+	}
+
+	console.log("Done")
+}
+
+var debugDrag = { 
+	dragstart: true,
+	drag: false,
+	dragenter: false,
+	dragleave: false,
+	dragover: false,
+	drop: true,
+	dragend: true
+}
+
+var _dragUID=undefined;
+function handleDragStart(grid,ev){
+	console.log("ES: " , ev)
+	var $cell = $( this );
+	_dragUID = $cell.attr('slot-uid');
+	if( debugDrag.dragstart ) {
+		console.log("Drag Event: dragstart",ev, " : " , $cell.attr('slot-uid'));
+		//console.log("Matched item: " , grid.findByUID( $cell.attr('slot-uid') ));
+	}
+	// Only available again in dropEvent
+	ev.originalEvent.dataTransfer.setData( 'text', $cell.attr('slot-uid') );
+
+}
+function handleDrag(grid,ev){
+	if( debugDrag.drag ) console.log("Drag Event: drag",ev);
+}
+function handleDragEnter(grid,ev){
+	var $cell = $( this );
+	var uid = $cell.attr('slot-uid'),
+		srcUID = _dragUID;
+
+	if( grid.canSwapItems( srcUID,uid ) ){
+		$cell[0].classList.add('drag-hover');
+		ev.preventDefault();
+	}
+
+	if( debugDrag.dragenter ) console.log("Drag Event: dragenter",ev);
+}
+function handleDragLeave(grid,ev){
+	this.classList.remove('drag-hover');
+	if( debugDrag.dragleave ) console.log("Drag Event: dragleave",ev);
+}
+function handleDragOver(grid,ev){
+	var $cell = $( this );
+	var uid = $cell.attr('slot-uid');
+
+	if( grid.canSwapItems( _dragUID,uid ) ){
+		// Allow it to be dropped
+		ev.preventDefault();
+	}
+
+
+	if( debugDrag.dragover ) console.log("Drag Event: dragover",ev);
+}
+function handleDrop(grid,ev){
+	ev.stopPropagation();
+
+	this.classList.remove('drag-hover');
+		// handleDragOver allows this to happen
+	var $cell = $( this );
+	var uid = $cell.attr('slot-uid');
+	if( debugDrag.drop ) console.log("Drag Event: drop",uid, " :: ",ev.originalEvent.dataTransfer.getData('text'));
+
+	srcUID = _dragUID;
+	grid.swapUID( uid,srcUID );
+
+	buildGrid( grid );
+
+	return false;
+}
+function handleDragEnd(grid,ev){
+	_dragUID = undefined;
+	if( debugDrag.dragend ) console.log("Drag Event: dragend",ev);
+}
+
+</script>
+
+</body>
+</html>

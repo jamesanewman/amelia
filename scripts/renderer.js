@@ -17,13 +17,18 @@ class RenderBase {
 
 	drawBackground(){
 		var bg = new createjs.Bitmap( this.level.getImage('background') );
-		bg.scaleX = this.stage.canvas.width / bg.image.width;
+		//bg.scaleX = bg.image.width/1200;
+		//bg.scaleY = bg.image.height/800;
 		this.stage.addChild( bg );
 	}
 
 	remove( item ){
 		var success = this.stage.removeChild( item.renderItem );
 		console.log("Removed " , success , " -> ", item );
+	}
+
+	onClick( callback ){
+		this.stage.addEventListener( 'click' , callback );
 	}
 }
 
@@ -36,8 +41,8 @@ export class PVZRenderer extends RenderBase {
 		// rows = 5
 		var w = 1200, h = 800;
 		// scale drawing code to idea -> actual canvas
-		this.stage.scaleX = w / this.stage.canvas.width;
-		this.stage.scaleY = h / this.stage.canvas.height;
+		this.stage.scaleX = this.stage.canvas.width / w;
+		this.stage.scaleY = this.stage.canvas.height / h;
 		this._rows = 5;
 		this._columns = 10;
 		this.width = w /  this._columns;
@@ -46,11 +51,33 @@ export class PVZRenderer extends RenderBase {
 		this.grid = this._rows * this._columns;
 		this.fps = 30;
 		this.temp = 0;
+
+		this.sizeX = w;
+		this.sizeY = h;
 	}
 
 	update(){
 		super.update();
 
+	}
+
+	drawBackground(){
+		super.drawBackground();
+
+		var pos = this.width, grid = new createjs.Shape();
+		grid.graphics.setStrokeStyle( 3/10 );
+		grid.graphics.beginStroke("#FF00FF");
+		while( pos < this.sizeX ){
+			console.log(">> " , pos, " :: " , this.sizeY);
+			grid.graphics.moveTo( pos,0 ).lineTo( pos,this.sizeY );
+
+			pos += this.width;	
+
+		}
+		grid.graphics.endStroke();
+
+		this.stage.addChild( grid );
+		// this.update();
 	}
 
 	getPoint( row,col ){
@@ -64,6 +91,10 @@ export class PVZRenderer extends RenderBase {
 
 		img.x = zombie.point.x;
 		img.y = zombie.point.y;
+
+		img.scaleX = this.width / img.width;
+		img.scaleY = this.height / img.height;
+
 		zombie.renderItem = img;
 		this.stage.addChild( img );
 

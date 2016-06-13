@@ -8,11 +8,48 @@
 <script type="text/javascript" src='bower_components/ramda/dist/ramda.js'></script>
 <script type="text/javascript" src='bower_components/EaselJS/lib/easeljs-0.8.2.combined.js'></script>
 
+<style type="text/css">
+	
+	#leftpanel {
+		position: relative;
+		float:left;
+		width: 200px;
+		border: 1px solid red;
+	}
+
+	#gameCanvas {
+		position: relative;
+		width: calc(100% - 415px);
+		left: 5px;
+		border: 1px solid black;
+	}
+
+
+	#rightPanel {
+		position: relative;
+		float: right;
+		width: 200px;
+		border: 1px solid green;
+	}
+
+</style>
 </head>
 
 <body onload='start()'>
 
-<canvas id='gameCanvas' width='1200' height='800' style='border: 1px solid black'></canvas>
+<div>
+	<div id="leftPanel">
+		<p>hello</p>
+	</div>
+	<div id="rightPanel">
+		<p>Goodbye</p>
+	</div>
+
+	<canvas id='gameCanvas' width="100%" style=''></canvas>
+
+
+</div>
+
 
 <script>
 System.transpiler = 'babel';

@@ -18,6 +18,7 @@
     "ramda": "^0.21.0",
     "babel": "*",
     "es6-module-loader": "^0.17.11",
-    "PreloadJS": "createjs-preloadjs#^0.6.2"
+    "PreloadJS": "createjs-preloadjs#^0.6.2",
+    "jquery": "^3.0.0"
   }
 }

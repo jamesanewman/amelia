@@ -38,9 +38,13 @@ export class App {
 		createjs.Ticker.timingMode = createjs.Ticker.RAF_SYNCHED;
 		createjs.Ticker.addEventListener( 'tick', this.onTick.bind(this) );
 
+		this.draw.onClick( this.onClick );
 		this.level.startLevel();
 	}
 
+	onClick(){
+		console.log("Click ", arguments);
+	}
 	onTick(tickInfo){
 		//console.log("Update drawing system " ,this.tickState);
 		// states move in FPS intervals, so state = multiple of FPS
