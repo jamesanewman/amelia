@@ -67,7 +67,8 @@ function importModule( fileToImport ){
 
 function init(){
 	var modules = [
-			'test/Grid.js'
+			'test/Grid.js',
+			'test/Rules.js'
 		];
 	var importPromises = R.map( importModule , modules );
 	return Promise.all( importPromises );

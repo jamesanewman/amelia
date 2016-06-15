@@ -164,22 +164,57 @@ export class Grid {
 	}
 
 	init(){
-		for( var c=0; c<this.columns; c++ ){
-			// this.grid[ c ] = [];
-			// for( var r=0; r<this.rows; r++ ){
-			// 	this.grid[ c ][ r ] = SlotFactory( c,r,{} );
-			// 	this.grid[ c ][ r ].addToHistory( { message: "Initialised: " +Date() } );
-			// }			
+		for( var c=0; c<this.columns; c++ ){	
 			this.fillColumn( c );
 		}
+
+		console.log("=======================")
+		var matchFound = false,
+			tmp = 0;
+		do {
+			console.log("Check match")
+			matchFound = this.removeMatches();
+			tmp++;
+			console.log("Match Found " , matchFound);
+		} while( matchFound && tmp < 100);
+
+		console.log("-----------------------")
+	}
+
+	removeMatches(){
+
+		console.log("Matches : ", this.getMatches() );
+
+		var foundMatch = false;
+		// for( var column=0; column<this.columns; column++ ){
+		// 	for( var r=0; r<this.rows; r++ ){
+		// 		var i = this.getItem( column,r );
+		// 		var matches = this.getMatch( column,r );
+		// 		if( matches.match ) {
+		// 			console.log("Matches == ", matches  );
+		// 			foundMatch = true;
+		// 			this.grid[ column ][ r ] = SlotFactory(column,r,{});
+		// 		}
+
+		// 	}
+		// }
+		return foundMatch;	
 	}
 
 	fillColumn( column ){
 		if( !this.grid[ column ] ) this.grid[ column ] = [];
 		for( var r=0; r<this.rows; r++ ){
 			var i = this.getItem( column,r );
-			if( !i || i.isEmpty() ) this.grid[ column ][ r ] = SlotFactory(column,r,{});
+			if( !i || i.isEmpty() ) {
+				var newItem = SlotFactory(column,r,{});
+				// we are moving cols=0..X and row=0..Y
+				if( column > 2 && newItem.isSameType(this.grid[ column - 1][ r ]) && newItem.isSameType(this.grid[ column - 2][ r ])   )
+				this.grid[ column ][ r ] = newItem;
+			}
 		}
+
+
+
 	}
 
 	getColumn( column ){
@@ -195,8 +230,10 @@ export class Grid {
 	}
 
 	getItem( column, row ){
+		if( !this.grid || !this.grid[column] || !this.grid[column][row] ) return new NullSlot(-1,-1,{});
 		if( column >= this.columns || column < 0 ) return new NullSlot(-1,-1,{});
 		if( row >= this.rows || row < 0 ) return new NullSlot(-1,-1,{});
+
 		return this.grid[ column ][ row ];
 	}
 	findItemByUID(uid){
@@ -239,8 +276,10 @@ export class Grid {
 
 	canSwapItems( uid1,uid2 ){
 		var i1 = this.findByUID( uid1 ), 
-			i2 = this.findByUID( uid2 ),
-			cDiff = Math.abs( i1.col-i2.col ),
+			i2 = this.findByUID( uid2 );
+
+			if( !i1 || !i2 ) return false;
+		var cDiff = Math.abs( i1.col-i2.col ),
 			rDiff = Math.abs( i1.row-i2.row );
 
 		if( !i1 || !i2 ) return false;
@@ -301,22 +340,47 @@ export class Grid {
 
 	getMatch( column,row ){
 
+		var targetItem = this.getItem( column,row );
 		var westMatches = this.recursiveMatch( function(col,row){
 			return [ --col,row ];
 		}, column,row );
 
-		console.log(`west matches (${column},${row}: `, westMatches);
 
 		var eastMatches = this.recursiveMatch( function(col,row){
 			return [ ++col,row ];
 		}, column,row );
 
-		console.log(`east matches (${column},${row}: `, eastMatches);
+		var horizontalMatch = [];
+		// Matches contain same start item so don't count
+		if( westMatches.length + eastMatches.length - 1 > this.minMatch ){
+			horizontalMatch = R.concat( R.tail(eastMatches), R.tail(westMatches) );
+		}
+		//console.log(`horizontal matches (${column},${row}: `, horizontalMatch);
 
-		// both contain center item so drop from one
-		var full = R.concat( R.tail(westMatches), eastMatches);
-		console.log("All matches " , full);
+		var northMatches = this.recursiveMatch( function(col,row){
+			return [ col,--row ];
+		}, column,row );
 
+
+		var southMatches = this.recursiveMatch( function(col,row){
+			return [ col,++row ];
+		}, column,row );
+
+		var verticalMatch = [];
+		// Matches contain same start item so don't count
+		if( southMatches.length + northMatches.length - 1 > this.minMatch ){
+			verticalMatch = R.concat( R.tail(northMatches), R.tail(southMatches) );
+		}
+		//console.log(`vertical matches (${column},${row}): `, verticalMatch);
+		
+		var report = { match:false };
+		if( verticalMatch.length >= this.minMatch || horizontalMatch.length >= this.minMatch ){
+			report.match = true;
+		}
+		report.horizontal = horizontalMatch.push( targetItem );
+		report.vertical = verticalMatch.push( targetItem );
+		report.target = targetItem;
+		return report;
 	}
 
 	recursiveMatch( moveFunc, startColumn, startRow ){
@@ -328,7 +392,7 @@ export class Grid {
 			nextRow = startRow;
 
 
-		console.log( `${startColumn},${startRow} -> `, startItem.type );
+		//console.log( `${startColumn},${startRow} -> `, startItem.type );
 
 		//var tmp = 0;
 		//while( startItem.isSameType( nextItem ) ){
@@ -337,11 +401,13 @@ export class Grid {
 			[ nextCol, nextRow ] = moveFunc( nextCol, nextRow );
 			var nextItem = this.getItem( nextCol, nextRow );
 
+			//console.log("Item type: " , typeof nextItem)
 			if( !startItem.isSameType( nextItem ) || nextCol < 0 || nextCol >= this.columns || nextRow < 0 || nextRow >= this.rows ){
 				finished = true;				
 			} else {
 				items.push( nextItem );
 			}
+			//console.log("Item type: " , typeof nextItem)
 
 			//if( ++tmp > 10 ) finished = true;
 			//console.log( `${nextCol},${nextRow} -> `, nextItem.type , " : " , startItem.isSameType( nextItem ));
