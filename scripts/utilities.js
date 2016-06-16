@@ -1,9 +1,4 @@
-function sendNotification( newValue, oldValue, listener ){
-	if( !listener || !listener.callback ) return;
 
-	var customData = R.pick( ['data','identifier'], listener );
-	listener.callback( newValue,oldValue,customData  );
-}
 
 export class Observable {
 
