@@ -1,3 +1,8 @@
+# TODO
+
+- When reflowing check for new matches
+- Calculate possible 1 move 3-matches
+
 
 # questions
 

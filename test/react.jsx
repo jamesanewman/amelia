@@ -1,3 +1,4 @@
+
 function findDragTargetElement(target){
 	while( !target.attributes.getNamedItem('draggable') ){
 		target = target.parentElement;
@@ -6,6 +7,47 @@ function findDragTargetElement(target){
 }
 
 var MATCHSIZE = 3;
+
+function screenRenderer(){
+	var cols = GridStore.getColumns(), rows = GridStore.getRows();
+	var gridView = ( 
+			<ScreenView className="screen" scale="0.5" cols={cols} rows={rows}/>
+		),
+		display = document.getElementById('example');
+	ReactDOM.render(gridView,display);
+
+}
+
+function calculateScore( matchCount ){
+
+	if( matchCount > MATCHSIZE ) return ( matchCount - MATCHSIZE ) * 2;
+	return 1;
+
+}
+
+class ScreenView  extends React.Component {
+
+	render(){
+		return (
+			<div className="screen">
+				<ScoreView score={GridStore.getScore()}/>
+				<GridView cols={this.props.cols} rows={this.props.rows} scale={this.props.scale} />
+			</div>
+		)
+	}
+}
+
+class ScoreView  extends React.Component {
+
+	render(){
+		return (
+			<div className="scoreboard">
+				<p>Score: {this.props.score}</p>
+			</div>
+		)
+	}
+}
+
 class GridView  extends React.Component {
 
 	constructor(){
@@ -78,6 +120,8 @@ class GridView  extends React.Component {
 			start: this.handleDragStart.bind(this),
 			finish: this.handleDropFinish.bind(this)
 		}
+		var css = { transform: 'scale(' + this.props.scale + ')', 'transformOrigin': 'top left'}
+
 		var rows = grid.getRowData().map( function(row,idx){
 			return ( 
 				<RowView
@@ -87,7 +131,7 @@ class GridView  extends React.Component {
 			)
 		});
 		return (
-			<div className="grid">{rows}</div>
+			<div className="grid" style={css}>{rows}</div>
 		);
 	}
 }
@@ -211,7 +255,7 @@ var GridStore = ( function(cols,rows, render){
 			type: types[pos]
 		};	
 	} 
-	var grid = [];
+	var grid = [] ,destroyed = 0;
 
 
 	function emptyItem(){
@@ -241,6 +285,7 @@ var GridStore = ( function(cols,rows, render){
 			var matches = Interface.matches( r,c );
 		} while( matches.length > 0 )		
 	}
+	Interface.getScore = () => {return destroyed};
 	Interface.getColumns = () => { return cols };
 	Interface.getRows = () => { return rows };
 	Interface.getRowData = () => { return grid };
@@ -263,7 +308,8 @@ var GridStore = ( function(cols,rows, render){
 		return true;
 	}
 	Interface.destroy = ( itemList ) => {
-		console.log("Destroy Items " , itemList );
+		//console.log("Destroy Items " , itemList );
+		destroyed += itemList.length;
 		itemList.forEach( ( v,i ) => {
 			console.log(i , " - " , v , " <= ");
 			grid[ v.row ][ v.col ] = emptyItem();
@@ -291,21 +337,21 @@ var GridStore = ( function(cols,rows, render){
 		return ( row * rows ) + col;
 	}
 	Interface.reflowItem = (item) => {
-		console.log("Reflow: ", item);
+		//console.log("Reflow: ", item);
 
 		var row = item.row, col = item.col;
 		// at top and empty create new and finish
 		if( row == 0 ){
 			if( item.item.type == 'empty' ){
-				Interface.addItem( row,col );
-				//grid[ row ][ col ] = getInfo();
+				//Interface.addItem( row,col );
+				grid[ row ][ col ] = getInfo();
 				return;				
 			}
-			console.log("Current item " , item );
+			//console.log("Current item " , item );
 			return;
 		}
 
-		console.log("Reflow 2: ", row, " : " , col );
+		//console.log("Reflow 2: ", row, " : " , col );
 		// Swap with one above
 		Interface.swap( row, col, row -1, col);
 
@@ -325,6 +371,15 @@ var GridStore = ( function(cols,rows, render){
 
 		// Starting from the top (idx) look above and pull down
 		R.forEach( Interface.reflowItem, items );
+		// Check for any new matches I may have made
+		items = R.map( (item) => {
+			// keep the position but update the item
+			item.item = Interface.getData( item.row,item.col );
+			return item;
+		}, items );
+		console.log("Items 2 " , items );
+		R.forEach( (item) => {}, items );
+
 	}
 
 	Interface.matches = ( row,col ) => {
@@ -345,14 +400,14 @@ var GridStore = ( function(cols,rows, render){
 	Interface.matchHorizontally = ( row,col ) => {
 		var startItem = Interface.getData( row,col );
 
-		console.log(item," :: ", startItem)
+		//console.log(item," :: ", startItem)
 		if( startItem === undefined ) return [];
 		var matches = [{col: col,row: row,item: startItem }];
 		// Check to left
 		//console.log("hMatch against: ", startItem)
 		for( var c=col-1; c>=0;c--){
 			var item = Interface.getData( row,c );
-			console.log(item," :: ", startItem)
+			//console.log(item," :: ", startItem)
 			if( item === undefined || startItem === undefined) break;
 			if( item.type !== startItem.type ) {
 				//console.log("hMatch ", item, " -> (",row,",",c,") : " , matches.length);
@@ -432,14 +487,7 @@ var GridStore = ( function(cols,rows, render){
 
 	return Interface;
 
-} )(5,10,()=>{
-	var cols = GridStore.getColumns(), rows = GridStore.getRows();
-
-	var gridView = ( <GridView cols={cols} rows={rows}/> ),
-	display = document.getElementById('example');
-	ReactDOM.render(gridView,display);
-
-});
+} )(10,15,screenRenderer);
 
 GridStore.createGrid();
 GridStore.init();
