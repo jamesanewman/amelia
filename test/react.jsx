@@ -8,10 +8,16 @@ function findDragTargetElement(target){
 
 var MATCHSIZE = 3;
 
+class GameRunner {
+
+}
+
+var GRunner = new GameRunner();
+
 function screenRenderer(){
 	var cols = GridStore.getColumns(), rows = GridStore.getRows();
 	var gridView = ( 
-			<ScreenView className="screen" scale="0.5" cols={cols} rows={rows}/>
+			<ScreenView className="screen" scale="1.0" cols={cols} rows={rows}/>
 		),
 		display = document.getElementById('example');
 	ReactDOM.render(gridView,display);
@@ -52,8 +58,10 @@ class GridView  extends React.Component {
 
 	constructor(){
 		super();
+		this.REFLOW_DELAY = 1500;
 		this.state = {
-			dragging: undefined
+			dragging: undefined,
+			dragTarget: []
 		}
 	}
 
@@ -104,11 +112,44 @@ class GridView  extends React.Component {
 			destroy = R.uniq( destroy );
 			GridStore.destroy( destroy );
 			GridStore.reflowGrid();
+			// setTimeout( function(){
+			// 	var idx = 1;
+			// 	var returnedMatches = GridStore.findMatches();
+			// 	console.log("Returned Matches = " , returnedMatches );
+			// 	while( returnedMatches.length > 0 ){
 
+			// 		idx++;
+			// 	}
+			// 	console.log("Finished no matches remaining" );
+			// } , 1000 );
+			setTimeout( this.checkForNewMatches.bind( this ) , this.REFLOW_DELAY );
 			//console.log("Unique matches to destroy: " , destroy);
 		}
 
-		this.setState( { dragging: undefined } );
+		this.setState( { dragging: undefined, dragTarget: [-1,-1] } );
+	}
+
+	handleDragEnter(e,row,col){
+		var target = findDragTargetElement( e.target );
+		this.setState({ dragTarget: [row,col] });		
+		console.log("Grid view Enter Handler " , row, ":", col);
+	}
+
+	handleDragLeave(e,row,col){
+		//this.setState({ dragTarget: [row,col] });
+		console.log("Grid view Leave Handler");
+	}
+
+	checkForNewMatches(){
+		console.log("Destroying matches and reflowing " );
+		var returnedMatches = GridStore.findMatches();
+		if( returnedMatches.length > 0 ) {
+			GridStore.destroy( returnedMatches );
+			GridStore.reflowGrid();
+			console.log("More matches to check ");
+			setTimeout( this.checkForNewMatches.bind( this ), this.REFLOW_DELAY );
+		}
+		GridStore.updateView();
 	}
 
 	render(){
@@ -118,7 +159,8 @@ class GridView  extends React.Component {
 		var grid = GridStore;
 		var dragHandlers = {
 			start: this.handleDragStart.bind(this),
-			finish: this.handleDropFinish.bind(this)
+			finish: this.handleDropFinish.bind(this),
+			onEnter: this.handleDragEnter.bind(this)
 		}
 		var css = { transform: 'scale(' + this.props.scale + ')', 'transformOrigin': 'top left'}
 
@@ -126,6 +168,7 @@ class GridView  extends React.Component {
 			return ( 
 				<RowView
 					dragElement={_self.state.dragging}
+					dragTarget={_self.state.dragTarget}
 					dragHandlers={dragHandlers}
 					key={idx} idx={idx} cols={_self.props.cols} rows={_self.props.rows} row={idx}/>
 			)
@@ -150,6 +193,8 @@ class RowView  extends React.Component {
 			return (
 				<CellView className="CCX" 
 					dragElement={_self.props.dragElement}
+					dragTarget={_self.props.dragTarget}
+
 					row={_self.props.row} cell={idx} key={idx} dragHandlers={_self.props.dragHandlers}/>
 			)
 		});
@@ -185,13 +230,26 @@ class CellView extends React.Component {
 			rdiff = Math.abs( this.props.row  - this.props.dragElement.row );
 
 		if( (cdiff == 1 && rdiff == 0) || (cdiff==0 && rdiff==1) ){
+
+			// temporarily swap items
+			GridStore.swap( this.props.row,this.props.cell,this.props.dragElement.row,this.props.dragElement.cell );
+			var matches = GridStore.matches( this.props.row , this.props.cell );
+			//console.log("Matches = " , matches.length );
+			// Put it back where it belongs
+			GridStore.swap( this.props.row,this.props.cell,this.props.dragElement.row,this.props.dragElement.cell );
+
+			if( matches.length == 0 ) return false;
+			//console.log("Ret True")
 			return true;
 		} 		
 		return false;
 	}
+
 	handleDragEnter(e){
 
+		this.props.dragHandlers.onEnter( e, this.props.row, this.props.cell );
 		if( this.validDropPoint() ){
+			console.log("Drag Enter...")
 			this.highlight( true );
 			e.preventDefault();
 		} 
@@ -199,14 +257,22 @@ class CellView extends React.Component {
 	}
 	handleDragOver(e){
 
+
 		if( this.validDropPoint() ){
 			e.preventDefault();
 		} 
 
 	}
 	handleDragLeave(e){
-		//console.log("Handle drag leave ", this);
-		this.highlight( false );
+		// Dont need to unhighlight as that is handled as part of the whole grid update ! Nice.
+
+		//var target = findDragTargetElement(e.target);
+		//console.log("Drag over active " , (target==this.refs.__me), " => " , this.refs.__me );
+		// if( this.props.row != this.props.dragTarget[0] || this.props.col != this.props.dragTarget[1] ) {
+		// 	console.log("My values => ",this.props.row, ":", this.props.cell  );
+		// 	console.log("Drag Target => " , this.props.dragTarget[0], ":", this.props.dragTarget[1])
+		// 	this.highlight( false );
+		// }
 	}
 
 	handleDrop(e){
@@ -215,6 +281,7 @@ class CellView extends React.Component {
 			this.props.dragHandlers.finish(this.props.row, this.props.cell , this.props.dragElement.row, this.props.dragElement.cell);
 		}
 	}
+
 
 	render(){
 
@@ -226,12 +293,14 @@ class CellView extends React.Component {
 			<div className={classes} 
 				 data-row={this.props.row} data-cell={this.props.cell} 
 				 draggable="true" 
+				 ref="__me"
 				 onDragStart={dh.start} 
 				 onDragEnter={this.handleDragEnter.bind(this)} 
 				 onDragLeave={this.handleDragLeave.bind(this)}
 				 onDragOver={this.handleDragOver.bind(this)} 
 				 onDrop={this.handleDrop.bind(this)} 
 				 onDragEnd={dh.end}>
+
 				 <img src={data.image}></img>
 				
 			</div>
@@ -271,6 +340,7 @@ var GridStore = ( function(cols,rows, render){
 	Interface.init = () => {
 		updateView();
 	}
+	Interface.updateView = updateView;
 	Interface.createGrid = () => {
 		for( var r=0; r<rows; r++ ){
 			grid[r] = [];
@@ -344,14 +414,16 @@ var GridStore = ( function(cols,rows, render){
 		if( row == 0 ){
 			if( item.item.type == 'empty' ){
 				//Interface.addItem( row,col );
-				grid[ row ][ col ] = getInfo();
+				var newItem = getInfo();
+				console.log(`Empty Item ... (${row},${col}) -> ` , newItem);
+				grid[ row ][ col ] = newItem;
 				return;				
 			}
-			//console.log("Current item " , item );
+			console.log("Current item " , item );
 			return;
 		}
 
-		//console.log("Reflow 2: ", row, " : " , col );
+		console.log("Reflow 2: ", row, " : " , col );
 		// Swap with one above
 		Interface.swap( row, col, row -1, col);
 
@@ -363,6 +435,7 @@ var GridStore = ( function(cols,rows, render){
 			item: nextItem
 		});
 	}
+
 	Interface.reflowGrid = () => {
 		console.log("Check grid for empty items and reflow or add new ");
 		var items = Interface.findEmpty();
@@ -377,9 +450,36 @@ var GridStore = ( function(cols,rows, render){
 			item.item = Interface.getData( item.row,item.col );
 			return item;
 		}, items );
-		console.log("Items 2 " , items );
 		R.forEach( (item) => {}, items );
 
+	}
+
+	Interface.findMatches = () => {
+
+		function alreadyMatched( row,col ){
+			return R.where({
+				col: R.propEq('col',col),
+				row: R.propEq('row',row)
+			});
+		}
+
+		var matches = [];
+		for( var r=0;r<rows;r++){
+			for( var c=0;c<cols;c++){
+				//console.log("Checking ", r, ":", c );
+				if( R.any( alreadyMatched(r,c) , matches ) ){
+					console.log(r , "," , c , " already in match ", matches );
+				} else {
+					var currentMatches = Interface.matches(r,c);
+					//console.log("Current Matches = " , currentMatches);
+					matches = R.concat( matches, currentMatches );
+				}
+				//console.log("Check finished ", matches);
+			}
+		}
+
+		console.log("Matches = " , matches);
+		return R.uniq( matches );
 	}
 
 	Interface.matches = ( row,col ) => {
@@ -426,7 +526,7 @@ var GridStore = ( function(cols,rows, render){
 			//console.log("hMatch ", item, " -> (",row,",",c,") : " , ( item.type !== startItem.type ));
 			if( item === undefined || startItem === undefined) break;
 			if( item.type !== startItem.type ) {
-				console.log("hMatch ", item, " -> (",row,",",c,") : " , matches.length);
+				//console.log("hMatch ", item, " -> (",row,",",c,") : " , matches.length);
 				break;
 			}
 			matches = R.prepend({
