@@ -1,0 +1,103 @@
+<html>
+<head>
+
+    <script src="bower_components/react/react.js"></script>
+    <script src="bower_components/react/react-dom.js"></script>
+	<script src="bower_components/babel/browser-polyfill.js"></script>
+    <script src="bower_components/babel/browser.min.js"></script>
+    <script type="text/javascript" src='bower_components/ramda/dist/ramda.js'></script>
+
+	<script src="bower_components/es6-module-loader/dist/es6-module-loader-dev.js"></script>
+	<script src="bower_components/PreloadJS/lib/preloadjs-0.6.2.combined.js"></script>
+	<script src="bower_components/jquery/dist/jquery.js"></script>
+
+
+<style type="text/css">
+
+.display {
+	background: rgba( 255,0,0,0.3 );
+}
+
+.list {
+	border: 2px solid black;
+	border-radius: 5px;
+}
+
+.card {
+	background: rgba( 0, 255, 0 , 0.3 );
+	display: inline-block;
+	margin: 5px;
+	padding: 5px;
+	border-radius: 5px;
+}
+
+.std-size {
+	width: 50px;
+	height: 50px;
+}
+
+.list.players {
+
+}
+
+
+</style>
+</head>
+
+<body onload='startApp()'>
+
+<div>
+
+	<div id="landingPage">
+		
+	</div>
+
+
+</div>
+
+
+<script>
+System.transpiler = 'babel';
+
+function importModule( fileToImport ){
+	console.log('Importing ' , fileToImport );
+	return System.import( fileToImport ).then( function(module){
+		R.forEach( function addModuleToWindows(moduleName){
+				if( !window[ moduleName ] ){
+					console.log('Adding module ', moduleName, ' (' , fileToImport , ')');
+					window[ moduleName ] = module[moduleName];
+				} else {
+					console.log(moduleName , ' module already installed (' , fileToImport , ')' );
+				}
+			}, R.keys( module ) );
+	});
+}
+
+function init(){
+	var modules = [
+			'test/landing.jsx'
+		];
+	var importPromises = R.map( importModule , modules );
+	return Promise.all( importPromises );
+}
+
+function startApp(){
+
+
+	console.log('=========================');
+	init().then( run );
+	console.log('=========================');
+
+}
+
+function run(){
+
+	console.log("Running...");
+	renderLandingPage( "landingPage" );
+}
+
+
+</script>
+
+</body>
+</html>
