@@ -1,8 +1,10 @@
-{
-	"player1": {
-		"name": "James"
+[
+	{
+		"name": "James",
+		"desc": "A Daddy like player"
 	},
-	"player2": {
-		"name": "Amelia"
+	{
+		"name": "Amelia",
+		"desc": "A daughter like player"
 	}
-}
+]

@@ -1,10 +1,6 @@
-export function renderLandingPage( elementId ){
+export function renderLandingPage( elementId,player ){
 	ReactDOM.render( 
-		(
-			<div className="display">
-				<PlayersList source="/data/players.json"></PlayersList>
-			</div>
-		)
+		( <LandingScreen source="/data/players.json"/>)
 		, document.getElementById(elementId) 
 	);
 }
@@ -19,20 +15,18 @@ function dataExtractPlayer( playerName , players ){
 	if( !players || !players[playerName] ) return {};
 	return players[ playerName ];
 }
-
-class PlayersList extends React.Component {
+class LandingScreen extends React.Component {
 
 	constructor(){
 		super();
 		this.state = {
-			players: []
-		}
+			players: [],
+			currentPlayer: undefined
+		};
 	}
 
 	setPlayers( playersData ){
-		this.setState( {
-			players: R.values( playersData )
-		} );
+		this.setState( { players: playersData });
 		return playersData;
 	}
 
@@ -48,8 +42,15 @@ class PlayersList extends React.Component {
 	    this.serverRequest.abort();  
 	}
 
-	handlePlayerClick(e,playerName){
-		console.log("PlayerList player -> " , playerName );
+	selectPlayer(e,player){
+		console.log("LS PlayerList player -> " , player.name );
+		this.setState( { currentPlayer: player.name } );
+	}
+
+	getPlayer( playerName ){
+		playerName = playerName || this.state.currentPlayer;
+		console.log( playerName , " => " , R.values(this.state.players) );
+		return R.find( R.propEq('name',playerName ), this.state.players );
 	}
 
 	render(){
@@ -57,12 +58,52 @@ class PlayersList extends React.Component {
 		console.log("Players state " , this.state.players )
 
 		var _self = this,
-			playerCards = this.state.players.map( function( playerData,idx ){
+			currentPlayer;
+
+		if( this.state.currentPlayer ){
+			console.log("This player -> " , this.getPlayer() );
+			currentPlayer = <PlayerCard display="full" player={this.getPlayer()}></PlayerCard>
+		}
+
+		console.log("Player LS = " , this.state.players );
+		console.log("CPlayer LS = " , this.state.currentPlayer );
+		
+		return (
+			<div className="screen display landing-screen">
+				<div className="large-display">
+					{currentPlayer}
+				</div>
+				<PlayersList players={this.state.players} onPlayerSelect={this.selectPlayer.bind(this)}></PlayersList>
+			</div>
+		)
+	}
+
+}
+
+class PlayersList extends React.Component {
+
+	constructor(){
+		super();
+
+	}
+
+	handlePlayerClick(e,playerName){
+		console.log("PlayerList player -> " , playerName );
+		if( this.props.onPlayerSelect ){
+			this.props.onPlayerSelect( e,playerName );
+		}
+	}
+
+	render(){
+
+		console.log("Players props " , this.props )
+
+		var _self = this,
+			playerCards = this.props.players.map( function( playerData,idx ){
 				console.log( idx + " Player = " , playerData );
 				return ( <PlayerCard player={playerData} key={idx} clickHandler={_self.handlePlayerClick.bind(_self)}></PlayerCard> );
 			});
 
-		console.log("Player cards = ", playerCards);
 		return (
 			<div className="list players">
 				{playerCards}
@@ -75,25 +116,46 @@ class PlayersList extends React.Component {
 class PlayerCard extends React.Component {
 	constructor(){
 		super();
-		this.state = { name: "unknown" };
+		//this.state = { name: "unknown" };
 	}
 
 	handleClick(e){
-		console.log("Clicked player " , this.state );
+		console.log("Clicked player " , this.props.player );
 		if( this.props.clickHandler ){
 			console.log("Handler detected");
-			this.props.clickHandler( e, this.state );
+			this.props.clickHandler( e, this.props.player );
 		}
 	}
 
 	componentDidMount() {
-		this.setState( this.props.player );	      
+		//this.setState( this.props.player );	      
 	}
 
+	componentDidUpdate(prevProps, prevState) {
+	      
+	}
 	render(){
+		var details,
+			classes = "card",
+			player = this.props.player;
+
+		switch( this.props.display ){
+
+			case 'full':
+				details = (	<p>{player.desc}</p> );
+				classes += " full-size detailed-display";
+				console.log("Setting up a detailed player ", player )
+				break;
+			default: 
+				classes += " std-size card-button";
+				break;
+		}
+
+
 		return (
-			<div className="std-size card" onClick={this.handleClick.bind(this)}>
-				<p className="field name">{this.state.name}</p>
+			<div className={classes} onClick={this.handleClick.bind(this)}>
+				<p className="field name">{player.name}</p>
+				{details}
 			</div>
 		)
 	}
